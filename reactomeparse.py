@@ -3,6 +3,8 @@ import csv
 import re
 
 reactomeID = set()
+parents = set()
+children = set()
 
 def cleanID(str):
     str = re.sub('[-]','',str)
@@ -33,7 +35,7 @@ def parseReactome(nodesIn, nodesOut, edgesOut, source):
         elif source == "reactrel":
             parentID = cleanID(line[0])
             childID = cleanID(line[1])
-            edgesOut.write("reactome:" + parentID + "|is_a|reactome|" + childID + "\n")
+            edgesOut.write("reactome:" + childID + "|is_a|reactome|" + parentID + "\n")
 
 
 
