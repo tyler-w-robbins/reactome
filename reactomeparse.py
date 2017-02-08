@@ -15,21 +15,25 @@ def parseReactome(nodesIn, nodesOut, edgesOut, source):
             currentID = cleanID(line[0])
             if not currentID in reactomeID:
                 reactomeID.add(currentID)
-                nodesOut.write(currentID + "|" + line[2] + "|||reactome\n")
+                nodesOut.write(currentID + "|" + line[1] + "|||reactome\n")
         elif source == "chebi":
             currentID = cleanID(line[1])
-            edgesOut.write("CHEBI:" + line[0] + "|part_of|reactome|" + currentID + "\n")
+            edgesOut.write("CHEBI:" + line[0] + "|xref|reactome|" + currentID + "\n")
             if not currentID in reactomeID:
                 print("chebi")
                 reactomeID.add(currentID)
                 nodesOut.write(currentID + "|" + line[3] + "|||reactome\n")
         elif source == "ncbi":
             currentID = cleanID(line[1])
-            edgesOut.write("nih.nlm.ncbi.gene.id:" + line[0] + "|part_of|reactome|" + currentID + "\n")
+            edgesOut.write("nih.nlm.ncbi.gene.id:" + line[0] + "|xref|reactome|" + currentID + "\n")
             if not currentID in reactomeID:
                 print("ncbi")
                 reactomeID.add(currentID)
                 nodesOut.write(currentID + "|" + line[3] + "|||reactome\n")
+        elif source == "reactrel":
+            parentID = cleanID(line[0])
+            childID = cleanID(line[1])
+            edgesOut.write("reactome:" + parentID + "|is_a|reactome|" + childID + "\n")
 
 
 
@@ -41,15 +45,17 @@ def main():
 
     nodesOut = open("reactomeNodesOut.csv","w")
     edgesOut = open("reactomeEdgesOut.csv","w")
+    edgesXrefOut = open("reactomeEdgesOut.xref.csv","w")
 
     # write output file headers
     nodesOut.write("source_id:ID|name:string|synonyms:string[]|definition:string|:LABEL\n")
     edgesOut.write(":START_ID|:TYPE|source:string|:END_ID\n")
 
     # parse reactome nodes from both chebi and ncbi gene files
-    parseReactome(reactomePathIn, nodesOut, edgesOut, "reactome")
-    parseReactome(chebiIn, nodesOut, edgesOut, "chebi")
-    parseReactome(ncbiIn, nodesOut, edgesOut, "ncbi")
+    parseReactome(reactomePathIn, nodesOut, edgesXrefOut, "reactome")
+    parseReactome(chebiIn, nodesOut, edgesXrefOut, "chebi")
+    parseReactome(ncbiIn, nodesOut, edgesXrefOut, "ncbi")
+    parseReactome(reactomeRelsIn, nodesOut, edgesOut, "reactrel")
 
     # close dem shits
     chebiIn.close()
