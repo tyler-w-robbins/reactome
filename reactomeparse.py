@@ -5,6 +5,8 @@ import re
 reactomeID = set()
 parents = set()
 children = set()
+parentsDict = defaultdict(list)
+childrensDict = defaultdict(list)
 
 def cleanID(str):
     str = re.sub('[-]','',str)
@@ -35,9 +37,16 @@ def parseReactome(nodesIn, nodesOut, edgesOut, source):
         elif source == "reactrel":
             parentID = cleanID(line[0])
             childID = cleanID(line[1])
+            if parentID in parentsDict:
+                parentsDict[parentID].append(childID)
+                # print(type(parentsDict[parentID]))
+            else:
+                parentsDict[parentID].append(childID)
+            childrensDict[childID] = parentID
             edgesOut.write("reactome:" + childID + "|is_a|reactome|" + parentID + "\n")
 
-
+def recursiveParentFinder():
+    pass
 
 def main():
     chebiIn = open("ChEBI2Reactome_All_Levels.txt","r")
@@ -59,6 +68,19 @@ def main():
     parseReactome(ncbiIn, nodesOut, edgesXrefOut, "ncbi")
     parseReactome(reactomeRelsIn, nodesOut, edgesOut, "reactrel")
 
+    for x, y in parentsDict.items():
+        if x in childrensDict:
+            for w in y:
+                for z in childrensDict[x]:
+                    edgesOut.write("reactome:" + w + "|is_a|reactome|" + z + "\n")
+            # print(x)
+            # for child, parent in childrensDict.items():
+            #     for z in parent:
+            #         edgesOut.write("reactome:" + z + "|is_a|reactome|" + parent + "\n")
+                # print("\t" + child)
+
+        # print(type(y))
+
     # close dem shits
     chebiIn.close()
     ncbiIn.close()
@@ -74,3 +96,5 @@ if __name__ == "__main__":
 # nih.nlm.ncbi.gene.id:
 # The "Pathway hierarchy relationship" file consists of two columns of Reactome Stable identifiers (ST_ID), defining the relationship between pathways within the pathway hierarchy. The first column provides the parent pathway stable identifier,
 # whereas the second column provides the child pathway stable identifier.
+
+#aug 4 dday oct 5th bday
