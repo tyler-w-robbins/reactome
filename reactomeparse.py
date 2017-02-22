@@ -3,8 +3,8 @@ import csv
 import re
 
 reactomeID = set()
-parents = set()
-children = set()
+# parents = set()
+# children = set()
 parentsDict = defaultdict(list)
 childrensDict = defaultdict(list)
 existingRels = set()
@@ -38,25 +38,43 @@ def parseReactome(nodesIn, nodesOut, edgesOut, source):
         elif source == "reactrel":
             parentID = cleanID(line[0])
             childID = cleanID(line[1])
-            if parentID in parentsDict:
-                parentsDict[parentID].append(childID)
-            else:
-                existingRels.add((parentID,childID))
-                parentsDict[parentID].append(childID)
-            if childID in childrensDict:
-                childrensDict[childID].append(parentID)
-            childrensDict[childID] = parentID
+            parentsDict[parentID].append(childID)
+            existingRels.add((parentID,childID))
+            childrensDict[childID].append(parentID)
             edgesOut.write("reactome:" + childID + "|is_a|reactome|" + parentID + "\n")
 
-def isParentAChild(parent):
+def isParentAChild(parent, children, edgesOut):
     if parent in childrensDict:
+        for grandparent in childrensDict[parent]:
+            # print(type(children))
+            if not (grandparent,parent) in existingRels:
+                # print(grandparent + " " + parent)
+                edgesOut.write("reactome:" + parent + "|is_a|reactome|" + grandparent + "\n")
+                existingRels.add((grandparent,parent))
+            if type(children) is list:
+                for child in children:
+                    if not (grandparent,child) in existingRels:
+                        existingRels.add((grandparent,child))
+                        print(grandparent + " " + child)
+                        edgesOut.write("reactome:" + child + "|is_a|reactome|" + grandparent + "\n")
+                    isParentAChild(grandparent, child, edgesOut)
+            elif type(children) is str:
+                if not (grandparent,children) in existingRels:
+                    existingRels.add((grandparent,child))
+                    print(grandparent + " " + children)
+                    edgesOut.write("reactome:" + children + "|is_a|reactome|" + grandparent + "\n")
+                isParentAChild(grandparent, children, edgesOut)
         return True
     else:
-        return False
+        return
 
-def recursiveParentFinder():
+def recursiveParentFinder(edgesOut):
     for parent, child in parentsDict.items():
-        isParentAChild(parent)
+        if isParentAChild(parent, child, edgesOut) is True:
+            pass
+#
+# def recursion(newparent, newchild, youngestchild):
+#     if
 
 def main():
     chebiIn = open("ChEBI2Reactome_All_Levels.txt","r")
@@ -80,10 +98,10 @@ def main():
 
     # print(existingRels)
     # print(('RMMU110373', 'RMMU110362') in existingRels)
-    for x,y in childrensDict.items():
-        print(x)
-        print("\t" + y)
-    recursiveParentFinder()
+    # for x,y in childrensDict.items():
+    #     print(x)
+    #     print(str(y))
+    recursiveParentFinder(edgesOut)
 
     #     if x in childrensDict:
     #         for w in y:
