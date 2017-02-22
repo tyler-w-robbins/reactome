@@ -55,13 +55,13 @@ def isParentAChild(parent, children, edgesOut):
                 for child in children:
                     if not (grandparent,child) in existingRels:
                         existingRels.add((grandparent,child))
-                        print(grandparent + " " + child)
+                        # print(grandparent + " " + child)
                         edgesOut.write("reactome:" + child + "|is_a|reactome|" + grandparent + "\n")
                     isParentAChild(grandparent, child, edgesOut)
             elif type(children) is str:
                 if not (grandparent,children) in existingRels:
-                    existingRels.add((grandparent,child))
-                    print(grandparent + " " + children)
+                    existingRels.add((grandparent,children))
+                    # print(grandparent + " " + children)
                     edgesOut.write("reactome:" + children + "|is_a|reactome|" + grandparent + "\n")
                 isParentAChild(grandparent, children, edgesOut)
         return True
@@ -101,8 +101,9 @@ def main():
     # for x,y in childrensDict.items():
     #     print(x)
     #     print(str(y))
+    print(len(existingRels))
     recursiveParentFinder(edgesOut)
-
+    print(len(existingRels))
     #     if x in childrensDict:
     #         for w in y:
     #             for z in childrensDict[x]:
