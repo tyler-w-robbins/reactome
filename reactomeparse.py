@@ -2,17 +2,25 @@ from collections import defaultdict
 import csv
 import re
 
+
 reactomeID = set()
+
+# Dictionaries for quick storage/lookup whether or not a node is a child of another.
 parentsDict = defaultdict(list)
 childrensDict = defaultdict(list)
+
+# Sets for identifying existing relationships, so no duplicates are output.
 existingChebi = set()
 existingNcbi = set()
 existingRels = set()
 
+# Function for removal of unnecessary characters from the IDs.
 def cleanID(str):
     str = re.sub('[-]','',str)
     return str
 
+# General function for parsing nodes and basic xref relationships out of
+# the reactome files.
 def parseReactome(nodesIn, nodesOut, edgesOut, source):
     reactomeReader = csv.reader(nodesIn, delimiter="\t")
     for line in reactomeReader:
@@ -47,35 +55,32 @@ def parseReactome(nodesIn, nodesOut, edgesOut, source):
             childrensDict[childID].append(parentID)
             edgesOut.write(childID + "|is_a|reactome|" + parentID + "\n")
 
+# Function recursively seeks additional parents until it can find no more.
 def isParentAChild(parent, children, edgesOut):
     if parent in childrensDict:
         for grandparent in childrensDict[parent]:
-            # print(type(children))
             if not (grandparent,parent) in existingRels:
-                # print(grandparent + " " + parent)
                 edgesOut.write(parent + "|is_a|reactome|" + grandparent + "\n")
                 existingRels.add((grandparent,parent))
             if type(children) is list:
                 for child in children:
                     if not (grandparent,child) in existingRels:
                         existingRels.add((grandparent,child))
-                        # print(grandparent + " " + child)
                         edgesOut.write(child + "|is_a|reactome|" + grandparent + "\n")
                     isParentAChild(grandparent, child, edgesOut)
             elif type(children) is str:
                 if not (grandparent,children) in existingRels:
                     existingRels.add((grandparent,children))
-                    # print(grandparent + " " + children)
                     edgesOut.write(children + "|is_a|reactome|" + grandparent + "\n")
                 isParentAChild(grandparent, children, edgesOut)
         return True
+        # If top parent is found, end recursion
     else:
         return
 
 def recursiveParentFinder(edgesOut):
     for parent, child in parentsDict.items():
-        if isParentAChild(parent, child, edgesOut) is True:
-            pass
+        isParentAChild(parent, child, edgesOut)
 
 def main():
     chebiIn = open("ChEBI2Reactome_All_Levels.txt","r")
@@ -112,8 +117,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-# nih.nlm.ncbi.gene.id:
-# The "Pathway hierarchy relationship" file consists of two columns of Reactome Stable identifiers (ST_ID), defining the relationship between pathways within the pathway hierarchy. The first column provides the parent pathway stable identifier,
-# whereas the second column provides the child pathway stable identifier.
